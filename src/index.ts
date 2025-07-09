@@ -59,8 +59,16 @@ export class MyMCP extends McpAgent {
 }
 
 export default {
-	fetch(request: Request, env: Env, ctx: ExecutionContext) {
+	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		const url = new URL(request.url);
+		const authHeader = request.headers.get("Authorization");
+		if (!authHeader || !authHeader.startsWith("Bearer ")) {
+			return new Response("Unauthorized", { status: 401 });
+		}
+		const token = authHeader.split(" ")[1];
+		if (token !== env.SECRET_TOKEN) {
+			return new Response("Unauthorized", { status: 401 });
+		}
 
 		if (url.pathname === "/sse" || url.pathname === "/sse/message") {
 			return MyMCP.serveSSE("/sse").fetch(request, env, ctx);
